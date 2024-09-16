@@ -1,0 +1,21 @@
+{
+    "study": "Study",
+    "ck-study-info": "Thank you for your participation in our study and for your help in evaluating our educational software on the topic of 'Systems of linear equations'. We have developed (at least) one educational game for each of the three solution methods - equalization, substitution and elimination- for systems of linear equations, which we would like to test together with you. Below you will find (at least) one section with various tasks and a tutorial or game instructions for each method. You have either received additional instructions from us or we will guide you through the tasks. In both cases, please follow the instructions carefully. Have fun!",
+    "ck-equalization": "Educational game on the equalization method",
+    "ck-bartering": "Bartering game (preparation for the substitution method)",
+    "ck-substitution": "Educational game on the substitution method",
+    "ck-elimination": "Educational game on the elimination method",
+    "thank-you": "You've done it! That was the last task. Thank you for taking part in this study!",
+    "flexibility-study-1": "Thank you for taking part in our study and for your help in testing our educational software on the topic of ‘Flexibility Training for Systems of Linear Equations’.",
+    "flexibility-study-2": "Before we can start the study, we will briefly discuss how to interact with the software to solve systems of equations using one of the three solution methods, namely the equating, substitution and addition methods.",
+    "flexibility-study-3": "Please wait for further instructions before continuing.",
+    "flexibility-study-4": "You have tried all three test tasks, great! You are now ready to start the study.",
+    "flexibility-study-5": "In the study, you will work with the software for 25 minutes. If you get stuck in between or don't understand something, you are welcome to get in touch and we will help you.",
+    "flexibility-study-6": "Please wait for our start signal so that everyone can start the study at the same time.",
+    "flexibility-study-7": "Good luck and have fun!",
+    "start-study": "Start study",
+    "try-out": "Try out",
+    "try-equalization": "$t(try-out) equalization method",
+    "try-substitution": "$t(try-out) substitution method",
+    "try-elimination": "$t(try-out) elimination method"
+}

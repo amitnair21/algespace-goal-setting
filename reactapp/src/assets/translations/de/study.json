@@ -1,0 +1,21 @@
+{
+  "study": "Studie",
+  "ck-study-info": "Vielen Dank für deine Teilnahme an unserer Studie und für deine Mithilfe bei der Evaluierung unserer Lernsoftware zum Thema 'Lineare Gleichungssysteme'. Zu jedem der drei Lösungsverfahren - Gleichsetzung, Einsetzung und Addition - für lineare Gleichungssysteme haben wir (mindestens) ein Lernspiel entwickelt, welches wir gerne mit dir zusammen testen möchten. Unten findest du zu jedem Verfahren (mindestens) einen Abschnitt mit verschiedenen Aufgaben sowie jeweils einem Tutorial bzw. einer Spielanleitung. Entweder hast du von uns eine zusätzliche Arbeitsanweisung erhalten oder wirst von uns beim Bearbeiten der Aufgaben begleitet. In beiden Fällen bitten wir dich, den Anweisungen genau zu folgen. Viel Spaß!",
+  "ck-equalization": "Lernspiel zum Gleichsetzungsverfahren",
+  "ck-bartering": "Tauschhandelspiel (Vorbereitung für das Einsetzungsverfahren)",
+  "ck-substitution": "Lernspiel zum Einsetzungsverfahren",
+  "ck-elimination": "Lernspiel zum Additionsverfahren",
+  "thank-you": "Du hast es geschafft! Das war die letzte Aufgabe. Vielen Dank für deine Teilnahme an dieser Studie!",
+  "flexibility-study-1": "Vielen Dank für deine Teilnahme an unserer Studie und für deine Mithilfe beim Testen unserer Lernsoftware zum Thema 'Flexibilitätstraining für Lineare Gleichungssysteme'.",
+  "flexibility-study-2": "Bevor es mit der Studie losgehen kann, besprechen wir noch kurz, wie man mit der Software interagiert, um Gleichungssysteme mit einem der drei Lösungsverfahren, nämlich Gleichsetzungs-, Einsetzungs- und Additionsverfahren, zu lösen.",
+  "flexibility-study-3": "Warte bitte auf weitere Anweisungen, bevor du fortfährst.",
+  "flexibility-study-4": "Du hast alle drei Testaufgaben ausprobiert, super! Gleich kann es mit der Studie losgehen.",
+  "flexibility-study-5": "In der Studie wirst du 25 Minuten mit der Software arbeiten. Falls du zwischendurch mal nicht weiter kommst oder etwas nicht verstehst, kannst du dich gerne melden und wir helfen dir weiter.",
+  "flexibility-study-6": "Warte bitte auf unser Startsignal, damit alle gleichzeitig mit der Studie beginnen. ",
+  "flexibility-study-7": "Viel Erfolg und viel Spaß!",
+  "start-study": "Studie starten",
+  "try-out": "ausprobieren",
+  "try-equalization": "Gleichsetzungsverfahren $t(try-out)",
+  "try-substitution": "Einsetzungsverfahren $t(try-out)",
+  "try-elimination": "Additionsverfahren $t(try-out)"
+}
