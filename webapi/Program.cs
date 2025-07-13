@@ -4,28 +4,29 @@ using System.Threading.RateLimiting;
 using webapi.AuthHelpers;
 using webapi.Authorization;
 using webapi.Services;
+using webapi.Data;                  // ← make sure your DbContext lives here
 
 var builder = WebApplication.CreateBuilder(args);
+var config  = builder.Configuration;
 
-// Add framework services
+// 1. Framework services
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// ─── Register your SQLite DbContext ──────────────────────────────────────
-builder.Services.AddDbContext<MyDbContext>(options =>
-    options.UseSqlite(
-        builder.Configuration.GetConnectionString("DefaultConnection")
+// 2. SQLite + EF-Core
+builder.Services.AddDbContext<MyDbContext>(opts =>
+    opts.UseSqlite(
+        config.GetConnectionString("DefaultConnection")
     )
 );
 
-// ─── CORS Policies ────────────────────────────────────────────────────────
+// 3. CORS policies
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("DevelopmentPolicy", policy =>
-    {
         policy
-            .WithMethods("GET", "PUT", "POST")
+            .WithMethods("GET","PUT","POST")
             .WithHeaders(
                 HeaderNames.Accept,
                 HeaderNames.ContentType,
@@ -34,16 +35,14 @@ builder.Services.AddCors(options =>
             )
             .AllowCredentials()
             .SetIsOriginAllowed(origin =>
-            {
-                if (string.IsNullOrWhiteSpace(origin)) return false;
-                return origin.ToLower().StartsWith("http://localhost:5173");
-            });
-    });
+                !string.IsNullOrWhiteSpace(origin)
+                && origin.StartsWith("http://localhost:5173", StringComparison.OrdinalIgnoreCase)
+            )
+    );
 
     options.AddPolicy("ProductionPolicy", policy =>
-    {
         policy
-            .WithMethods("GET", "PUT", "POST")
+            .WithMethods("GET","PUT","POST")
             .WithHeaders(
                 HeaderNames.Accept,
                 HeaderNames.ContentType,
@@ -52,20 +51,19 @@ builder.Services.AddCors(options =>
             )
             .AllowCredentials()
             .SetIsOriginAllowed(origin =>
-            {
-                if (string.IsNullOrWhiteSpace(origin)) return false;
-                // Replace with your actual frontend URL
-                return origin.ToLower().StartsWith("https://your-frontend-app.netlify.app");
-            });
-    });
+                !string.IsNullOrWhiteSpace(origin)
+                // TODO: replace with your real frontend URL
+                && origin.StartsWith("https://your-frontend-app.netlify.app", StringComparison.OrdinalIgnoreCase)
+            )
+    );
 });
 
-// ─── Rate Limiting ────────────────────────────────────────────────────────
+// 4. Rate limiting
 builder.Services.AddRateLimiter(options =>
 {
     options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: httpContext.User.Identity?.Name
+            partitionKey: httpContext.User.Identity?.Name 
                           ?? httpContext.Request.Headers.Host.ToString(),
             factory: partition => new FixedWindowRateLimiterOptions
             {
@@ -76,23 +74,29 @@ builder.Services.AddRateLimiter(options =>
             }));
 });
 
-// ─── Auth Settings & Your Services ───────────────────────────────────────
+// 5. API-key settings & app services
 builder.Services.Configure<AuthSettings>(
-    builder.Configuration.GetSection("AuthSettings")
+    config.GetSection("AuthSettings")
 );
-
 builder.Services.AddScoped<ICKExerciseService, CKExerciseService>();
 builder.Services.AddScoped<IFlexibilityExerciseService, FlexibilityExerciseService>();
 builder.Services.AddScoped<ICKStudyService, CKStudyService>();
 builder.Services.AddScoped<IFlexibilityStudyService, FlexibilityStudyService>();
 
-// ─── Log the connection string for sanity check ───────────────────────────
-var connString = builder.Configuration.GetConnectionString("DefaultConnection");
+// 6. Sanity-check log
+var connString = config.GetConnectionString("DefaultConnection");
 Console.WriteLine($"[Startup] SQLite DB path: {connString}");
 
 var app = builder.Build();
 
-// ─── Middleware Pipeline ─────────────────────────────────────────────────
+// 7. (Optional) Auto-create/migrate the SQLite DB if it doesn’t exist
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<MyDbContext>();
+    db.Database.EnsureCreated();
+}
+
+// 8. Middleware pipeline
 app.UseRateLimiter();
 
 if (app.Environment.IsDevelopment())
@@ -110,5 +114,4 @@ else
 }
 
 app.MapControllers();
-
 app.Run();
