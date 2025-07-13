@@ -154,5 +154,12 @@
   "elimination-def": "Beim Additionsverfahren versucht man durch Addieren oder Subtrahieren der Gleichungen im LGS eine Variable zu eliminieren.",
   "Suitability": "Geeignete Verfahren erkennen",
   "Efficiency": "Effiziente Verfahren erkennen",
-  "Matching": "Systeme Verfahren zuordnen"
+  "Matching": "Systeme Verfahren zuordnen",
+  "system-solution-success": "Gut gemacht, du hast das Gleichungssystem gelöst!",
+  "great-choice": "Gute Wahl! Wie sicher fühlst du dich mit dieser Methode?",
+  "ive-got-this": "Ich habe das!",
+  "im-not-sure": "Ich bin nicht sicher",
+  "feel-free-update-goal": "Aktualisiere gerne dein aktuelles Ziel und mache dich mit der Methode vertraut, bevor du sie hier anwendest!",
+  "change-goal": "Ziel ändern",
+  "im-fine": "Mir geht's gut!"
 }
