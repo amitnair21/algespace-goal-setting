@@ -33,7 +33,7 @@ builder.Services.AddCors(options =>
             .SetIsOriginAllowed(origin =>
             {
                 if (string.IsNullOrWhiteSpace(origin)) return false;
-                if (origin.ToLower().StartsWith("https://algespace.sic.saarland")) return true;
+                if (origin.ToLower().StartsWith("")) return true;
                 return false;
             });
     });
