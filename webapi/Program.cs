@@ -58,7 +58,7 @@ builder.Services.AddCors(options =>
             .AllowCredentials()
             .SetIsOriginAllowed(origin =>
                 !string.IsNullOrWhiteSpace(origin) &&
-                origin.StartsWith("https://your-frontend-app.netlify.app", StringComparison.OrdinalIgnoreCase)
+                origin.StartsWith("https://algespace.netlify.app", StringComparison.OrdinalIgnoreCase)
             );
     });
 });
