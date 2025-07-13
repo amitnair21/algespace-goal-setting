@@ -27,6 +27,68 @@
             cursor: pointer;
         }
     }
+
+    // AMIT
+    .current-goal,
+      .current-goal p {
+        margin-left: auto;
+        margin-right: 0.5rem;
+        color: white;
+        font-weight: 300 !important;
+        cursor: pointer; // shows it’s interactive
+
+        &:hover {
+          color: #219EBC;
+        }
+      }
+}
+
+// Overlay styles AMIT
+.overlay-window {
+  position: fixed;
+  top: 0; // ⬅️ covers the entire screen from top
+  left: 0;
+  width: 100vw;
+  height: 100vh; // ⬅️ full screen height
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000; // ensure this is higher than navbar’s z-index (which is 500)
+}
+
+.overlay-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  max-width: 50rem;
+  width: 90%;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+  text-align: center;
+}
+
+/* Style for the goal dropdowns */
+.goal-select {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* match your app's font */
+  font-size: 1rem; /* decent readable size */
+  padding: 0.4em 0.8em; /* vertical and horizontal padding for comfort */
+  margin-left: 0.5em; /* space between label/text and dropdown */
+  margin-right: 0.5em; /* space between dropdowns or following text */
+  border: 2px solid #888; /* subtle outline */
+  border-radius: 8px; /* nice rounded corners */
+  background-color: #fff; /* white background */
+  transition: border-color 0.3s ease;
+  cursor: pointer;
+  appearance: none; /* remove default styling for better cross-browser consistency */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+/* On focus, highlight outline */
+.goal-select:focus {
+  outline: none;
+  border-color: #0078d4; /* accent color */
+  box-shadow: 0 0 5px rgba(0, 120, 212, 0.5);
 }
 
 .main-route:active:not(.study) {
