@@ -1,14 +1,14 @@
 # Build stage
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-WORKDIR /app
+WORKDIR /src
 
-# Copy the .csproj and restore
+# Copy csproj and restore
 COPY webapi/*.csproj ./webapi/
 RUN dotnet restore ./webapi/webapi.csproj
 
 # Copy the rest of the source
-COPY webapi/. ./webapi/
-WORKDIR /app/webapi
+COPY webapi/ ./webapi/
+WORKDIR /src/webapi
 
 # Build and publish
 RUN dotnet publish -c Release -o /app/publish
