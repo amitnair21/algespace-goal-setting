@@ -2,19 +2,19 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Copy and restore the csproj
-COPY webapi/*.csproj ./webapi/
-RUN dotnet restore ./webapi/webapi.csproj
+# 1. Copy only the project file and restore
+COPY *.csproj ./
+RUN dotnet restore webapi.csproj
 
-# 🛠 FIX: copy the *contents* of webapi, not the folder itself
-COPY webapi/ ./webapi/
-
-WORKDIR /src/webapi
-RUN dotnet publish -c Release -o /app/publish
+# 2. Copy the rest of the source and publish
+COPY . ./
+RUN dotnet publish webapi.csproj -c Release -o /app/publish
 
 # Runtime stage
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
+
+# 3. Grab the published output
 COPY --from=build /app/publish .
 
 EXPOSE 80
