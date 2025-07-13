@@ -1,5 +1,11 @@
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Net.Http.Headers;
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.SQLite;
 using System.Threading.RateLimiting;
@@ -16,32 +22,36 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// 2. Grab both connection‐string env-vars
-//    (Set these in Render’s Dashboard → Environment)
-var exConn   = config.GetConnectionString("DefaultConnection");  // algespace.db
-var studyConn = config.GetConnectionString("StudiesConnection"); // studies.db
+// 2. Read your two connection strings from Render env‐vars
+//    – DefaultConnection → algespace.db
+//    – StudiesConnection → studies.db
+var exConn    = config.GetConnectionString("DefaultConnection");
+var studyConn = config.GetConnectionString("StudiesConnection");
+Console.WriteLine($"[Startup] DefaultConnection = {exConn}");
+Console.WriteLine($"[Startup] StudiesConnection = {studyConn}");
 
-Console.WriteLine($"[Startup] exConn = {exConn}");
-Console.WriteLine($"[Startup] studyConn = {studyConn}");
-
-// 3. Register exercise DB for all ICKExerciseService injections
+// 3. Register the SQLite connection for exercise services
 builder.Services.AddTransient<IDbConnection>(_ => new SQLiteConnection(exConn));
 
-// 4. Register your exercise & flexibility-exercise services
+// 4. Exercise services (use the above connection)
 builder.Services.AddScoped<ICKExerciseService, CKExerciseService>();
 builder.Services.AddScoped<IFlexibilityExerciseService, FlexibilityExerciseService>();
 
-// 5. Register studies services using a second SQLiteConnection
+// 5. Study services (use ActivatorUtilities to inject any extra ctor args)
 builder.Services.AddScoped<ICKStudyService>(sp =>
-{
-    return new CKStudyService(new SQLiteConnection(studyConn));
-});
+    ActivatorUtilities.CreateInstance<CKStudyService>(
+        sp,
+        new SQLiteConnection(studyConn)
+    )
+);
 builder.Services.AddScoped<IFlexibilityStudyService>(sp =>
-{
-    return new FlexibilityStudyService(new SQLiteConnection(studyConn));
-});
+    ActivatorUtilities.CreateInstance<FlexibilityStudyService>(
+        sp,
+        new SQLiteConnection(studyConn)
+    )
+);
 
-// 6. CORS
+// 6. CORS policy (allow your Netlify front-end)
 builder.Services.AddCors(opts =>
 {
     opts.AddPolicy("ProductionPolicy", p =>
@@ -58,33 +68,34 @@ builder.Services.AddCors(opts =>
 });
 
 // 7. Rate limiting
-builder.Services.AddRateLimiter(o =>
+builder.Services.AddRateLimiter(options =>
 {
-    o.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext,string>(ctx =>
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(ctx =>
         RateLimitPartition.GetFixedWindowLimiter(
-          partitionKey: ctx.User.Identity?.Name 
-                        ?? ctx.Request.Headers.Host.ToString(),
-          factory: _ => new FixedWindowRateLimiterOptions {
-              AutoReplenishment = true,
-              PermitLimit       = 1000,
-              QueueLimit        = 0,
-              Window            = TimeSpan.FromMinutes(1)
-          }
-        )
+            partitionKey: ctx.User.Identity?.Name 
+                          ?? ctx.Request.Headers.Host.ToString(),
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                AutoReplenishment = true,
+                PermitLimit       = 1000,
+                QueueLimit        = 0,
+                Window            = TimeSpan.FromMinutes(1)
+            })
     );
 });
 
-// 8. AuthSettings + your API-key middleware
+// 8. Auth settings
 builder.Services.Configure<AuthSettings>(
     config.GetSection("AuthSettings")
 );
 
 var app = builder.Build();
 
-// 9. Health-check endpoint (verifies both DBs are reachable)
+// 9. Health-check endpoint for both databases
 app.MapGet("/health", () =>
 {
-    var results = new Dictionary<string, object>();
+    var results = new Dictionary<string, string>();
+
     foreach ((string name, string cs) in new[]
     {
         ("algespace",   exConn),
@@ -95,28 +106,30 @@ app.MapGet("/health", () =>
         {
             using var c = new SQLiteConnection(cs);
             c.Open();
-            var tables = c.ExecuteScalar<int>(
-              "SELECT COUNT(*) FROM sqlite_master WHERE type='table';"
+            var t = c.ExecuteScalar<int>(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='table';"
             );
-            results[name] = $"OK ({tables} tables)";
+            results[name] = $"OK ({t} tables)";
         }
         catch (Exception ex)
         {
             results[name] = $"ERROR ({ex.Message})";
         }
     }
+
     return Results.Ok(results);
 });
 
-// 10. Controllers + global exception logging
-app.MapControllers();
-
+// 10. Global exception logger
 app.Use(async (ctx, next) =>
 {
-    try { await next(); }
+    try
+    {
+        await next();
+    }
     catch (Exception ex)
     {
-        Console.Error.WriteLine(ex);
+        Console.Error.WriteLine($"[ERROR] {ex}");
         ctx.Response.StatusCode = 500;
         await ctx.Response.WriteAsync(ex.Message);
     }
@@ -128,4 +141,5 @@ app.UseCors("ProductionPolicy");
 app.UseMiddleware<ApiKeyMiddleware>();
 app.UseHttpsRedirection();
 
+app.MapControllers();
 app.Run();
