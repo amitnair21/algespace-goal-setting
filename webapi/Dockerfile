@@ -2,11 +2,9 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# 1. Copy project file + restore
 COPY webapi.csproj ./
 RUN dotnet restore
 
-# 2. Copy source + publish
 COPY . ./
 RUN dotnet publish -c Release -o /app/publish
 
@@ -14,12 +12,14 @@ RUN dotnet publish -c Release -o /app/publish
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
 
-# 3. Copy published output
-COPY --from=build /app/publish .
+# 1) Copy the published DLLs
+COPY --from=build /app/publish .  
 
-# 4. Copy BOTH of your SQLite files into Render’s data folder
-COPY --from=build /src/Data/databases/algespace.db /opt/render/data/algespace.db
-COPY --from=build /src/Data/databases/studies.db   /opt/render/data/studies.db
+# 2) Copy your SQLite files side-by-side under /app/Data/databases
+#    (adjust the source path if your .db files live elsewhere in your repo)
+RUN mkdir -p Data/databases
+COPY --from=build /src/Data/databases/algespace.db Data/databases/algespace.db
+COPY --from=build /src/Data/databases/studies.db   Data/databases/studies.db
 
 EXPOSE 80
 ENTRYPOINT ["dotnet", "webapi.dll"]
