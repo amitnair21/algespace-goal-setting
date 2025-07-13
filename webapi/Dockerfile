@@ -2,15 +2,14 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Copy and restore
-COPY ./webapi/*.csproj ./webapi/
+# Copy and restore the csproj
+COPY webapi/*.csproj ./webapi/
 RUN dotnet restore ./webapi/webapi.csproj
 
-# Copy everything else
-COPY ./webapi/ ./webapi/
-WORKDIR /src/webapi
+# 🛠 FIX: copy the *contents* of webapi, not the folder itself
+COPY webapi/ ./webapi/
 
-# Build and publish
+WORKDIR /src/webapi
 RUN dotnet publish -c Release -o /app/publish
 
 # Runtime stage
