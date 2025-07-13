@@ -1,17 +1,22 @@
+# Build stage
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /app
 
-COPY *.csproj ./
-RUN dotnet restore
+# Copy the .csproj and restore
+COPY webapi/*.csproj ./webapi/
+RUN dotnet restore ./webapi/webapi.csproj
 
-COPY . ./
-RUN dotnet publish -c Release -o out
+# Copy the rest of the source
+COPY webapi/. ./webapi/
+WORKDIR /app/webapi
 
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+# Build and publish
+RUN dotnet publish -c Release -o /app/publish
+
+# Runtime stage
+FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
-
-COPY --from=build /app/out ./
+COPY --from=build /app/publish .
 
 EXPOSE 80
-
 ENTRYPOINT ["dotnet", "webapi.dll"]
