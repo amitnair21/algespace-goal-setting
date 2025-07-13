@@ -1,7 +1,7 @@
 import Axios, { AxiosInstance } from "axios";
 
 const axiosInstance: AxiosInstance = Axios.create({
-    baseURL: "http://localhost:7273",
+    baseURL: "https://algespace-goal-setting.onrender.com",
     headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
