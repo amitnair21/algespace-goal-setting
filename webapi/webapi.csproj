@@ -5,27 +5,16 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
-  <!-- remove any Migrations folder from compile/content if you aren’t using EF migrations -->
   <ItemGroup>
-    <Compile Remove="Migrations\**" />
-    <Content Remove="Migrations\**" />
-    <EmbeddedResource Remove="Migrations\**" />
-    <None Remove="Migrations\**" />
-  </ItemGroup>
+    <!-- ADO-NET SQLite driver -->
+    <PackageReference Include="System.Data.SQLite.Core" Version="1.0.118" />
 
-  <!-- keep your editorconfig linked -->
-  <ItemGroup>
-    <None Include="..\.editorconfig" Link=".editorconfig" />
-  </ItemGroup>
-
-  <ItemGroup>
+    <!-- Dapper for lightweight queries -->
     <PackageReference Include="Dapper" Version="2.1.28" />
+
+    <!-- Your existing packages -->
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.1" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
-    <PackageReference Include="System.Data.SQLite.Core" Version="1.0.118" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.3.1" />
-
-    <!-- EF Core SQLite provider -->
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.0" />
   </ItemGroup>
 </Project>
