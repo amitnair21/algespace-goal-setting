@@ -1,8 +1,3 @@
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Net.Http.Headers;
 using System;
 using System.Data;
@@ -14,74 +9,54 @@ using webapi.Authorization;
 using webapi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+var config  = builder.Configuration;
 
 // 1. Framework services
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// 2. Register a SQLite IDbConnection factory
-var connString = builder.Configuration.GetConnectionString("DefaultConnection");
-// Expect: Data Source=/opt/render/data/algespace.db
-builder.Services.AddTransient<IDbConnection>(_ => new SQLiteConnection(connString));
-
-// 3. CORS policies
-builder.Services.AddCors(options =>
+// 2. SQLite connection factory
+builder.Services.AddTransient<IDbConnection>(_ =>
 {
-    options.AddPolicy("DevelopmentPolicy", policy =>
-    {
-        policy
-            .WithMethods("GET", "PUT", "POST")
-            .WithHeaders(
-                HeaderNames.Accept,
-                HeaderNames.ContentType,
-                HeaderNames.Authorization,
-                "X-API-Key"
-            )
-            .AllowCredentials()
-            .SetIsOriginAllowed(origin =>
-                !string.IsNullOrWhiteSpace(origin) &&
-                origin.StartsWith("http://localhost:5173", StringComparison.OrdinalIgnoreCase)
-            );
-    });
-
-    options.AddPolicy("ProductionPolicy", policy =>
-    {
-        policy
-            .WithMethods("GET", "PUT", "POST")
-            .WithHeaders(
-                HeaderNames.Accept,
-                HeaderNames.ContentType,
-                HeaderNames.Authorization,
-                "X-API-Key"
-            )
-            .AllowCredentials()
-            .SetIsOriginAllowed(origin =>
-                !string.IsNullOrWhiteSpace(origin) &&
-                origin.StartsWith("https://algespace.netlify.app", StringComparison.OrdinalIgnoreCase)
-            );
-    });
+    var cs = config.GetConnectionString("DefaultConnection");
+    Console.WriteLine($"[Startup] Using SQLite ConnectionString: {cs}");
+    return new SQLiteConnection(cs);
 });
 
-// 4. Rate limiting
-builder.Services.AddRateLimiter(options =>
+// 3. CORS
+builder.Services.AddCors(opts =>
 {
-    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+    opts.AddPolicy("ProductionPolicy", p =>
+        p.WithOrigins("https://algespace.netlify.app")
+         .WithMethods("GET","POST","PUT","OPTIONS")
+         .WithHeaders(
+           HeaderNames.Accept,
+           HeaderNames.ContentType,
+           HeaderNames.Authorization,
+           "X-API-Key"
+         )
+         .AllowCredentials()
+    );
+});
+
+// 4. Rate Limiting, AuthSettings, your services…
+builder.Services.AddRateLimiter(o =>
+{
+    o.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext,string>(ctx =>
         RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: httpContext.User.Identity?.Name
-                          ?? httpContext.Request.Headers.Host.ToString(),
-            factory: partition => new FixedWindowRateLimiterOptions
-            {
+            partitionKey: ctx.User.Identity?.Name ?? ctx.Request.Headers.Host.ToString(),
+            factory: _ => new FixedWindowRateLimiterOptions {
                 AutoReplenishment = true,
                 PermitLimit       = 1000,
                 QueueLimit        = 0,
                 Window            = TimeSpan.FromMinutes(1)
-            }));
+            })
+    );
 });
 
-// 5. Auth settings & application services
 builder.Services.Configure<AuthSettings>(
-    builder.Configuration.GetSection("AuthSettings")
+    config.GetSection("AuthSettings")
 );
 builder.Services.AddScoped<ICKExerciseService, CKExerciseService>();
 builder.Services.AddScoped<IFlexibilityExerciseService, FlexibilityExerciseService>();
@@ -90,22 +65,46 @@ builder.Services.AddScoped<IFlexibilityStudyService, FlexibilityStudyService>();
 
 var app = builder.Build();
 
-// 6. Middleware pipeline
-app.UseRateLimiter();
-
-if (app.Environment.IsDevelopment())
+// 5. Health‐check endpoint for SQLite
+app.MapGet("/health", (IDbConnection db) =>
 {
-    app.UseDeveloperExceptionPage();
-    app.UseSwagger();
-    app.UseSwaggerUI();
-    app.UseCors("DevelopmentPolicy");
-}
-else
-{
-    app.UseCors("ProductionPolicy");
-    app.UseMiddleware<ApiKeyMiddleware>();
-    app.UseHttpsRedirection();
-}
+    try
+    {
+        db.Open();
+        // check that at least one table exists
+        var count = db.ExecuteScalar<int>(
+          "SELECT COUNT(*) FROM sqlite_master WHERE type='table';"
+        );
+        return Results.Ok($"🎉 SQLite reachable, {count} tables found");
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem($"🔴 DB error: {ex.Message}");
+    }
+});
 
+// 6. Your real endpoints with error‐logging
 app.MapControllers();
+
+// We’ll decorate controllers to log exceptions instead of swallow them
+app.Use(async (ctx, next) =>
+{
+    try
+    {
+        await next();
+    }
+    catch (Exception ex)
+    {
+        Console.Error.WriteLine($"[ERROR] {ex}");
+        ctx.Response.StatusCode = 500;
+        await ctx.Response.WriteAsync(ex.Message);
+    }
+});
+
+// 7. Middleware pipeline
+app.UseRateLimiter();
+app.UseCors("ProductionPolicy");
+app.UseMiddleware<ApiKeyMiddleware>();
+app.UseHttpsRedirection();
+
 app.Run();
