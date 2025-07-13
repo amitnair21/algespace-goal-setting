@@ -2,30 +2,26 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# 1. Copy only the project file
+# 1. Copy project file and restore dependencies
 COPY webapi.csproj ./
-
-# 2. Install the EF-Core SQLite provider so UseSqlite(...) compiles
-RUN dotnet add package Microsoft.EntityFrameworkCore.Sqlite --version 8.0.0
-
-# 3. Restore all dependencies (now including SQLite)
 RUN dotnet restore
 
-# 4. Copy the rest of your code
+# 2. Copy all source files and publish the app
 COPY . ./
-
-# 5. Publish your app
 RUN dotnet publish -c Release -o /app/publish
 
 # ─── Runtime Stage ───────────────────────────────────────────────────────────
-FROM mcr.microsoft.com/dotnet/aspnet:8.0
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
 
-# 6. Copy published output
+# 3. Copy the published output
 COPY --from=build /app/publish .
 
-# 7. Copy the SQLite file into Render’s persistent data folder
+# 4. Copy the SQLite database into Render’s persistent volume
+#    Adjust the source path if your .db lives elsewhere in the repo
 COPY --from=build /src/Data/databases/algespace.db /opt/render/data/algespace.db
 
 EXPOSE 80
+
+# 5. Launch the application
 ENTRYPOINT ["dotnet", "webapi.dll"]
