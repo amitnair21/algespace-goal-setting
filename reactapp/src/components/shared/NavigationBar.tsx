@@ -252,7 +252,7 @@ function updateGoalTextColor() {
       if (Array.isArray(barteringCompleted)) {
         completed = [...completed, ...barteringCompleted];
       } else {
-        console.warn("Bartering data missing or invalid:", barteringCompleted);
+        //console.warn("Bartering data missing or invalid:", barteringCompleted);
       }
     }
     const percent = (completed.length / total) * 100;
